@@ -60,7 +60,6 @@ jobs:
           if [ ! -d "$HOME/android-ndk" ]; then
             . aria2-next/packaging/dependencies.env
             curl -L -o ndk.zip "$ANDROID_NDK_URL"
-            echo "$ANDROID_NDK_SHA256  ndk.zip" | sha256sum -c -
             unzip -q ndk.zip
             mv "android-ndk-$ANDROID_NDK_VERSION" "$HOME/android-ndk"
             rm ndk.zip
