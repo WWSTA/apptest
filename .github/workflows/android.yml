@@ -17,25 +17,220 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  ARIA2_NEXT_VERSION: v2.4.6
+  ARIA2_NEXT_REPO: AnInsomniacy/aria2-next
+  ANDROID_NDK_VERSION: r29
+  ANDROID_API: 33
+  HOST: aarch64-linux-android
+
 jobs:
+  # ---------------------------------------------------------------------------
+  # Build aria2-next for Android ARM64
+  # ---------------------------------------------------------------------------
+  build-aria2-android:
+    name: Build aria2-next Android ARM64
+    runs-on: ubuntu-22.04
+    env:
+      PREFIX: ${{ github.workspace }}/aria2-deps
+
+    steps:
+      - name: Checkout aria2-next
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.ARIA2_NEXT_REPO }}
+          ref: ${{ env.ARIA2_NEXT_VERSION }}
+          path: aria2-next
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            unzip bzip2 make binutils cmake ninja-build \
+            pkg-config dpkg-dev curl ca-certificates
+
+      - name: Cache aria2-next dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PREFIX }}
+          key: aria2-deps-${{ env.ARIA2_NEXT_VERSION }}-${{ env.ANDROID_NDK_VERSION }}
+
+      - name: Download Android NDK
+        run: |
+          if [ ! -d "$HOME/android-ndk" ]; then
+            . aria2-next/packaging/dependencies.env
+            curl -L -o ndk.zip "$ANDROID_NDK_URL"
+            echo "$ANDROID_NDK_SHA256  ndk.zip" | sha256sum -c -
+            unzip -q ndk.zip
+            mv "android-ndk-$ANDROID_NDK_VERSION" "$HOME/android-ndk"
+            rm ndk.zip
+          fi
+
+      - name: Download dependency sources
+        run: |
+          cd aria2-next
+          . packaging/dependencies.env
+          . packaging/scripts/common.sh
+          curl_fetch "$OPENSSL_URL" "$OPENSSL_ARCHIVE" "$OPENSSL_SHA256"
+          curl_fetch "$EXPAT_URL" "$EXPAT_ARCHIVE" "$EXPAT_SHA256"
+          curl_fetch "$ZLIB_URL" "$ZLIB_ARCHIVE" "$ZLIB_SHA256"
+          curl_fetch "$CARES_URL" "$CARES_ARCHIVE" "$CARES_SHA256"
+          curl_fetch "$LIBSSH2_URL" "$LIBSSH2_ARCHIVE" "$LIBSSH2_SHA256"
+
+      - name: Build OpenSSL for Android
+        run: |
+          cd aria2-next
+          if [ ! -f "$PREFIX/lib/libssl.a" ]; then
+            . packaging/dependencies.env
+            . packaging/scripts/release-size-profile android
+            tar xf "$OPENSSL_ARCHIVE"
+            cd "openssl-$OPENSSL_VERSION"
+            ANDROID_NDK_HOME="$HOME/android-ndk" \
+            PATH="$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH" \
+            ./Configure no-shared no-module no-tests \
+              --prefix="$PREFIX" android-arm64 $RELEASE_CFLAGS
+            make -j"$(nproc)"
+            make install_sw
+          fi
+
+      - name: Build zlib for Android
+        run: |
+          cd aria2-next
+          if [ ! -f "$PREFIX/lib/libz.a" ]; then
+            . packaging/dependencies.env
+            . packaging/scripts/release-size-profile android
+            tar xf "$ZLIB_ARCHIVE"
+            cd "zlib-$ZLIB_VERSION"
+            CFLAGS="$RELEASE_CFLAGS" LDFLAGS="$RELEASE_LDFLAGS" \
+            ./configure --prefix="$PREFIX" --libdir="$PREFIX/lib" --includedir="$PREFIX/include" --static
+            make -j"$(nproc)" install
+          fi
+
+      - name: Build expat for Android
+        run: |
+          cd aria2-next
+          if [ ! -f "$PREFIX/lib/libexpat.a" ]; then
+            . packaging/dependencies.env
+            . packaging/scripts/release-size-profile android
+            tar xf "$EXPAT_ARCHIVE"
+            cd "expat-$EXPAT_VERSION"
+            CPPFLAGS="$RELEASE_CPPFLAGS" CFLAGS="$RELEASE_CFLAGS" LDFLAGS="$RELEASE_LDFLAGS" \
+            ./configure \
+              --host="$HOST" \
+              --build="$(dpkg-architecture -qDEB_BUILD_GNU_TYPE)" \
+              --prefix="$PREFIX" \
+              --disable-shared
+            make -j"$(nproc)" install
+          fi
+
+      - name: Build c-ares for Android
+        run: |
+          cd aria2-next
+          if [ ! -f "$PREFIX/lib/libcares.a" ]; then
+            . packaging/dependencies.env
+            . packaging/scripts/release-size-profile android
+            tar xf "$CARES_ARCHIVE"
+            cd "c-ares-$CARES_VERSION"
+            CPPFLAGS="$RELEASE_CPPFLAGS" CFLAGS="$RELEASE_CFLAGS" LDFLAGS="$RELEASE_LDFLAGS" \
+            ./configure \
+              --host="$HOST" \
+              --build="$(dpkg-architecture -qDEB_BUILD_GNU_TYPE)" \
+              --prefix="$PREFIX" \
+              --disable-shared
+            make -j"$(nproc)" install
+          fi
+
+      - name: Build libssh2 for Android
+        run: |
+          cd aria2-next
+          if [ ! -f "$PREFIX/lib/libssh2.a" ]; then
+            . packaging/dependencies.env
+            . packaging/scripts/release-size-profile android
+            tar xf "$LIBSSH2_ARCHIVE"
+            cd "libssh2-$LIBSSH2_VERSION"
+            CPPFLAGS="-I$PREFIX/include $RELEASE_CPPFLAGS" CFLAGS="$RELEASE_CFLAGS" LDFLAGS="$RELEASE_LDFLAGS" \
+            ./configure \
+              --host="$HOST" \
+              --build="$(dpkg-architecture -qDEB_BUILD_GNU_TYPE)" \
+              --prefix="$PREFIX" \
+              --disable-shared
+            make -j"$(nproc)" install
+          fi
+
+      - name: Build aria2-next for Android
+        run: |
+          cd aria2-next
+          . packaging/scripts/release-size-profile android
+          NDK="$HOME/android-ndk"
+          TOOLCHAIN="$NDK/toolchains/llvm/prebuilt/linux-x86_64"
+          export AR="$TOOLCHAIN/bin/llvm-ar"
+          export CC="$TOOLCHAIN/bin/$HOST$ANDROID_API-clang"
+          export CXX="$TOOLCHAIN/bin/$HOST$ANDROID_API-clang++"
+          export RANLIB="$TOOLCHAIN/bin/llvm-ranlib"
+          export STRIP="$TOOLCHAIN/bin/llvm-strip"
+
+          PKG_CONFIG_LIBDIR="$PREFIX/lib/pkgconfig" \
+          cmake -S . -B build/release -G Ninja \
+            -DCMAKE_SYSTEM_NAME=Android \
+            -DCMAKE_ANDROID_NDK="$NDK" \
+            -DCMAKE_ANDROID_ARCH_ABI=arm64-v8a \
+            -DCMAKE_ANDROID_STL_TYPE=c++_static \
+            -DCMAKE_SYSTEM_VERSION="$ANDROID_API" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DARIA2_STATIC_DEPENDENCIES=ON \
+            -DARIA2_WITH_WINTLS=OFF \
+            -DARIA2_WITH_GNUTLS=OFF \
+            -DARIA2_WITH_OPENSSL=ON \
+            -DARIA2_WITH_LIBXML2=OFF \
+            -DARIA2_WITH_EXPAT=ON \
+            -DARIA2_WITH_CARES=ON \
+            -DARIA2_WITH_ZLIB=ON \
+            -DARIA2_WITH_SQLITE3=OFF \
+            -DARIA2_WITH_LIBSSH2=ON \
+            -DARIA2_RELEASE_SIZE_OPTIMIZED=ON \
+            -DCMAKE_C_FLAGS="$RELEASE_CFLAGS" \
+            -DCMAKE_CXX_FLAGS="$RELEASE_CXXFLAGS" \
+            -DCMAKE_EXE_LINKER_FLAGS="$RELEASE_LDFLAGS" \
+            -DCMAKE_PREFIX_PATH="$PREFIX"
+          cmake --build build/release -j"$(nproc)"
+          "$STRIP" build/release/aria2-next
+
+      - name: Upload aria2-next binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: aria2-android-arm64
+          path: aria2-next/build/release/aria2-next
+          retention-days: 1
+
+  # ---------------------------------------------------------------------------
+  # Build Debug APK
+  # ---------------------------------------------------------------------------
   build-debug:
     name: Build Debug APK
     runs-on: ubuntu-latest
+    needs: build-aria2-android
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Download aria2-next binary
+        uses: actions/download-artifact@v4
+        with:
+          name: aria2-android-arm64
+          path: aria2-binary
+
+      - name: Place aria2c binary in assets
+        run: |
+          mkdir -p app/src/main/assets/aria2/arm64-v8a
+          cp aria2-binary/aria2-next app/src/main/assets/aria2/arm64-v8a/aria2c
+          chmod 755 app/src/main/assets/aria2/arm64-v8a/aria2c
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-
-      - name: Set up Node.js 24
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
 
       - name: Cache Gradle packages
         uses: actions/cache@v4
@@ -60,25 +255,36 @@ jobs:
           path: app/build/outputs/apk/debug/*.apk
           retention-days: 30
 
+  # ---------------------------------------------------------------------------
+  # Build Release APK
+  # ---------------------------------------------------------------------------
   build-release:
     name: Build Release APK
     runs-on: ubuntu-latest
+    needs: build-aria2-android
     if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Download aria2-next binary
+        uses: actions/download-artifact@v4
+        with:
+          name: aria2-android-arm64
+          path: aria2-binary
+
+      - name: Place aria2c binary in assets
+        run: |
+          mkdir -p app/src/main/assets/aria2/arm64-v8a
+          cp aria2-binary/aria2-next app/src/main/assets/aria2/arm64-v8a/aria2c
+          chmod 755 app/src/main/assets/aria2/arm64-v8a/aria2c
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-
-      - name: Set up Node.js 24
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
 
       - name: Cache Gradle packages
         uses: actions/cache@v4
@@ -119,6 +325,9 @@ jobs:
           path: app/build/outputs/mapping/release/mapping.txt
           retention-days: 90
 
+  # ---------------------------------------------------------------------------
+  # Create GitHub Release
+  # ---------------------------------------------------------------------------
   create-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
