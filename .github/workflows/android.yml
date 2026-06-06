@@ -90,6 +90,7 @@ jobs:
             AR=llvm-ar \
             RANLIB=llvm-ranlib \
             ./Configure no-shared no-module no-tests \
+              -D__ANDROID_API__=$ANDROID_API \
               --prefix="$PREFIX" android-arm64 $RELEASE_CFLAGS
             make -j"$(nproc)"
             make install_sw
