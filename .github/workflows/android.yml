@@ -77,8 +77,8 @@ jobs:
             tar xf "$OPENSSL_ARCHIVE"
             cd "openssl-$OPENSSL_VERSION"
             TOOLCHAIN="$NDK/toolchains/llvm/prebuilt/linux-x86_64"
+            export PATH="$TOOLCHAIN/bin:$PATH"
             ANDROID_NDK_ROOT="$NDK" \
-            PATH="$TOOLCHAIN/bin:$PATH" \
             AR=llvm-ar \
             RANLIB=llvm-ranlib \
             ./Configure no-shared no-module no-tests \
