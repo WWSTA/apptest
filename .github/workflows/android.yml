@@ -85,10 +85,7 @@ jobs:
             tar xf "$OPENSSL_ARCHIVE"
             cd "openssl-$OPENSSL_VERSION"
             NDK_TOOLCHAIN="$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64"
-            if [ ! -e "$NDK_TOOLCHAIN/bin/clang" ]; then
-              ln -s "aarch64-linux-android$ANDROID_API-clang" "$NDK_TOOLCHAIN/bin/clang"
-            fi
-            ANDROID_NDK_HOME="$HOME/android-ndk" \
+            ANDROID_NDK_ROOT="$HOME/android-ndk" \
             PATH="$NDK_TOOLCHAIN/bin:$PATH" \
             AR=llvm-ar \
             RANLIB=llvm-ranlib \
