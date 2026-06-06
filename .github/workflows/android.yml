@@ -86,6 +86,9 @@ jobs:
             cd "openssl-$OPENSSL_VERSION"
             ANDROID_NDK_HOME="$HOME/android-ndk" \
             PATH="$HOME/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH" \
+            CC=aarch64-linux-android33-clang \
+            AR=llvm-ar \
+            RANLIB=llvm-ranlib \
             ./Configure no-shared no-module no-tests \
               --prefix="$PREFIX" android-arm64 $RELEASE_CFLAGS
             make -j"$(nproc)"
