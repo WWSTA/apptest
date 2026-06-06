@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Motrix</string>
+
+    <!-- Tabs -->
+    <string name="tab_active">Active</string>
+    <string name="tab_completed">Completed</string>
+    <string name="tab_error">Error</string>
+
+    <!-- Actions -->
+    <string name="new_download">New Download</string>
+    <string name="pause">Pause</string>
+    <string name="pause_all">Pause All</string>
+    <string name="resume">Resume</string>
+    <string name="resume_all">Resume All</string>
+    <string name="delete">Delete</string>
+    <string name="delete_with_files">Delete with Files</string>
+    <string name="cancel">Cancel</string>
+    <string name="confirm">Confirm</string>
+    <string name="save">Save</string>
+    <string name="copy">Copy</string>
+    <string name="share">Share</string>
+    <string name="open">Open</string>
+    <string name="open_file">Open File</string>
+    <string name="select_all">Select All</string>
+    <string name="clear">Clear</string>
+    <string name="refresh">Refresh</string>
+    <string name="retry">Retry</string>
+    <string name="edit">Edit</string>
+    <string name="add">Add</string>
+    <string name="done">Done</string>
+    <string name="close">Close</string>
+    <string name="back">Back</string>
+    <string name="search">Search</string>
+
+    <!-- Navigation / Sections -->
+    <string name="settings">Settings</string>
+    <string name="speed_chart">Speed Chart</string>
+    <string name="download_list">Download List</string>
+    <string name="task_detail">Task Detail</string>
+
+    <!-- New Download Dialog -->
+    <string name="new_download_title">New Download</string>
+    <string name="new_download_url_hint">Enter download URL or magnet link</string>
+    <string name="new_download_filename_hint">Filename (optional)</string>
+    <string name="new_download_directory_hint">Save directory (optional)</string>
+    <string name="new_download_headers_hint">HTTP Headers (optional)</string>
+    <string name="new_download_start_immediately">Start immediately</string>
+    <string name="new_download_invalid_url">Please enter a valid URL or magnet link</string>
+
+    <!-- Download Status -->
+    <string name="status_waiting">Waiting</string>
+    <string name="status_downloading">Downloading</string>
+    <string name="status_paused">Paused</string>
+    <string name="status_completed">Completed</string>
+    <string name="status_error">Error</string>
+    <string name="status_removed">Removed</string>
+    <string name="status_seeding">Seeding</string>
+
+    <!-- Speed / Progress -->
+    <string name="download_speed_format">%1$s/s</string>
+    <string name="download_progress_format">%1$s / %2$s</string>
+    <string name="download_percent_format">%1$d%%</string>
+    <string name="remaining_time_format">%1$s remaining</string>
+    <string name="connections_format">%1$d connections</string>
+    <string name="seeds_format">%1$d seeds</string>
+
+    <!-- Settings -->
+    <string name="settings_general">General</string>
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_download">Download</string>
+    <string name="settings_advanced">Advanced</string>
+    <string name="settings_about">About</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_download_dir">Download Directory</string>
+    <string name="settings_max_concurrent_downloads">Max Concurrent Downloads</string>
+    <string name="settings_max_connections_per_server">Max Connections Per Server</string>
+    <string name="settings_default_download_dir">Default Download Directory</string>
+    <string name="settings_rpc_port">RPC Port</string>
+    <string name="settings_proxy">Proxy</string>
+    <string name="settings_user_agent">User Agent</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_version">Version</string>
+    <string name="settings_open_source_licenses">Open Source Licenses</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_downloads">Downloads</string>
+    <string name="notification_channel_downloads_description">Download progress notifications</string>
+    <string name="notification_download_progress">Downloading %1$s</string>
+    <string name="notification_download_complete">%1$s download complete</string>
+    <string name="notification_download_error">%1$s download failed</string>
+
+    <!-- Permissions -->
+    <string name="permission_notification_required">Notification permission is required to show download progress</string>
+    <string name="permission_grant">Grant</string>
+
+    <!-- Errors -->
+    <string name="error_generic">An error occurred</string>
+    <string name="error_network">Network error</string>
+    <string name="error_file_not_found">File not found</string>
+    <string name="error_storage_space">Insufficient storage space</string>
+    <string name="error_download_failed">Download failed</string>
+
+    <!-- Misc -->
+    <string name="empty_state_no_downloads">No downloads yet</string>
+    <string name="empty_state_no_active">No active downloads</string>
+    <string name="empty_state_no_completed">No completed downloads</string>
+    <string name="empty_state_no_errors">No errors</string>
+    <string name="empty_state_add_download_hint">Tap + to add a new download</string>
+    <string name="upload_speed_format">↑ %1$s/s</string>
+    <string name="download_speed_label">↓ %1$s/s</string>
+    <string name="total_speed_format">↓ %1$s/s  ↑ %2$s/s</string>
+    <string name="file_size_bytes">%1$d B</string>
+    <string name="file_size_kb">%1$.1f KB</string>
+    <string name="file_size_mb">%1$.1f MB</string>
+    <string name="file_size_gb">%1$.2f GB</string>
+</resources>
